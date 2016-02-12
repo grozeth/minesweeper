@@ -1,0 +1,543 @@
+<html>
+<head>
+<script type="text/javascript">
+var size = "20";
+var minez = "90";
+var timer_is_on = false;
+var t;
+var challenge = false;
+var time = 0;
+
+function setDefaults() {
+document.getElementById('size').value = size;
+document.getElementById('minez').value = minez;
+document.getElementById('mines').innerHTML = minez;
+createGame(size, minez);
+}
+
+document.oncontextmenu = function() {
+return false;
+}
+
+
+// WHAT HAPPENS WHEN USER CLICKS
+
+	function checkKey(c, event) {
+		
+		if (document.getElementById('winlose').value == 0) {
+		
+			if (event == null || event == "") {
+				event = window.event;
+			}
+			var target = event.target != null ? event.target : event.srcElement;
+			if (target.tagName.toLowerCase() == 'a' ) {
+				if (event.button == 2) {
+					putFlag(c);
+				}
+				else {
+					checkCell(c, "first");
+				}
+			}
+		}
+	}
+
+// RIGHT CLICK EVENT
+	
+function putFlag(c) {
+		if (c.className != "opened") {
+			s = document.getElementById('flagcount');
+			if (c.id == "flagged") {
+				c.id = "";
+				c.innerHTML = "#";
+				s.innerHTML = parseInt(s.innerHTML) - 1;
+				if (parseInt(s.innerHTML) < minez+1) {
+					s.style.color = "";
+				}
+				
+			}
+			else {
+				c.id = "flagged";
+				c.innerHTML = "$";
+				s.innerHTML = parseInt(s.innerHTML)+ 1;
+				if (parseInt(s.value) > minez) {
+					s.style.color  = "red";
+				}
+				
+			}
+		}
+	}
+	
+// LEFT CLICK EVENT
+	function checkCell(c, s) {
+	
+		if (!timer_is_on) {
+			timer_is_on = true;
+			timedCount();
+		}
+		
+		
+		if(c.id != "flagged") {
+			if (c.className == "mine") {
+				lose();
+			}
+			else {
+				c.className = "opened";
+				if (s == "first") {
+					findCellCordinates(c, s);
+				}
+				else {
+					findCellCordinates(c);
+				}
+			}
+		}
+	}
+
+//CHECK THE POSITION OF THE CELL
+	
+	function findCellCordinates(c, v) {
+		var grid = document.getElementById('grid');
+		minefield = grid.getElementsByTagName('a');
+		i = 0;
+			while (minefield[i] != c) {
+				i++
+			}	
+			
+			ypos = i/size;
+			xpos = i%size;
+			groove = findAdjacentCells(minefield, i, xpos, ypos);
+			if (groove == 0) {
+				c.innerHTML = "";
+				openAdjacentCells(minefield, i, xpos, ypos);
+			}
+			else {
+				c.innerHTML = groove;
+				if (groove == 1) {
+					c.style.color = "blue";
+				 }
+				else if (groove == 2) {
+					c.style.color = "green";
+				 }
+				else if (groove == 3) {
+					c.style.color = "red";				
+				 }
+				else if (groove == 4) {
+					c.style.color = "darkblue";
+				 }
+				else if (groove == 5) {
+					c.style.color = "maroon";
+				 }
+				else if (groove == 6) {
+					c.style.color = "powderblue";
+				 }
+				else if (groove == 7) {
+					c.style.color = "Violet";
+				 }
+				else {
+					c.style.color = "brown";
+				 }
+			}
+			if (v == "first") {
+				checkWin();
+			}
+	}
+	
+// CHECK THE ADJACENT CELLS
+	
+	function findAdjacentCells(minefield, i, xpos, ypos) {
+		m = 0;
+		if (ypos < size-1 ) {
+			if (xpos != 0) {
+				if (minefield[i+(size-1)].className != "opened") {
+					m += checkAdjacentCells(minefield[i+(size-1)]);
+				}
+			}
+			if (minefield[i+size].className != "opened") {
+				m += checkAdjacentCells(minefield[i+size]);
+			}
+			if (xpos < size-1) {
+				if (minefield[i+(size+1)].className != "opened") {
+					m += checkAdjacentCells(minefield[i+(size+1)]);
+				}
+			}	
+		}
+		if (xpos != 0) {
+			if (minefield[i-1].className != "opened") {
+				m += checkAdjacentCells(minefield[i-1]);
+			}
+		}
+		if (xpos < size-1) {
+			if (minefield[i+1].className != "opened") {
+				m += checkAdjacentCells(minefield[i+1]);
+			}
+		}
+		
+		if (ypos >= 1) {
+	
+				if (xpos != 0) {
+					if (minefield[i-(size+1)].className != "opened") {
+						m += checkAdjacentCells(minefield[i-(size+1)]);
+					}
+				}
+				if (minefield[i-size].className != "opened") {
+					m += checkAdjacentCells(minefield[i-size]);
+				}
+				if (xpos < size-1) {
+					if (minefield[i-(size-1)].className != "opened") {
+						m += checkAdjacentCells(minefield[i-(size-1)]);
+					}
+				}
+		}
+		return m;
+	}
+	
+// CHECK IF THE ADJACENT CELL HAS A MINE
+	
+	function checkAdjacentCells(c) {
+		if (c.className == "mine") {
+			return 1;
+		}
+		else {
+			return 0;
+		}
+	}
+	
+	
+// OPEN THE ADJACENT CELLS
+	
+	function openAdjacentCells(minefield, i, xpos,ypos) {
+		if (ypos < size-1) {
+			if (xpos != 0) {
+				if (minefield[i+(size-1)].className != "opened") {
+					checkCell(minefield[i+(size-1)]);
+				}
+			}
+			if (minefield[i+size].className != "opened") {
+				checkCell(minefield[i+size]);
+			}
+			if (xpos < size-1) {
+				if (minefield[i+(size+1)].className != "opened") {
+					checkCell(minefield[i+(size+1)]);
+				}
+			}
+		}
+		if (xpos != 0) {
+			if (minefield[i-1].className != "opened") {
+				checkCell(minefield[i-1]);
+			}
+		}
+		if (xpos < size-1) {
+			if (minefield[i+1].className != "opened") {
+				checkCell(minefield[i+1]);
+			}
+		}
+		
+		if (ypos >= 1) {
+			if (xpos != 0) {
+				if (minefield[i-(size+1)].className != "opened") {
+					checkCell(minefield[i-(size+1)]);
+				}
+			}
+			if (minefield[i-size].className != "opened") {
+				checkCell(minefield[i-size]);
+			}
+			if (xpos < size-1) {
+				if (minefield[i-(size-1)].className != "opened") {
+					checkCell(minefield[i-(size-1)]);
+				}
+			}
+		}
+		
+	}
+	
+	
+// IF WIN == TRUE 
+	
+	function checkWin(){
+		var x = document.getElementsByClassName("opened");
+		if (x.length+minez ==  size*size) {
+			revealAll(true);
+			document.getElementById('win').style.display = "block";
+		}
+	}
+	
+// IF LOSE == TRUE
+	
+	function lose() {
+		revealAll();
+	}
+	
+// REVEAL THE MINES AND CHANGE CORRECT FLAGS TO GREEN
+	
+	function revealAll(winner) {
+		minefield = [];
+		s = 0;
+		document.getElementById('grid');
+		cells = grid.getElementsByTagName('a');
+		timer_is_on = false;
+		clearTimeout(t);
+		document.getElementById('winlose').value = 1;
+		while (s < cells.length) {
+			minefield.push(cells[s]);
+			s++;
+		 }
+		 
+		 i = 0;
+		 while (i < minefield.length) {
+			if (minefield[i].className == "mine") {
+				minefield[i].style.fontWeight = "bold";
+				if (minefield[i].id == "flagged") {
+					minefield[i].style.color = "green";
+				}
+				else {
+					if (winner) {
+						minefield[i].innerHTML = "$";
+						minefield[i].style.color = "green";
+					}
+					else {
+						minefield[i].innerHTML = "¤";
+						minefield[i].style.color = "red";
+					}
+				}
+			}
+			i++;			
+		 }
+		 document.getElementById('result').style.display = "block";
+		 if (!winner) {
+			if (time <= 0) {
+				document.getElementById('lose').style.display = "block";
+			}
+			else {
+				document.getElementById('lose').style.display = "block";
+			}
+		 }
+		 return false;
+	}
+	
+// CREATE NEW GAME
+	
+    function createGame(size, minez) {
+		document.getElementById('grid');
+		var i = 0;
+		var lastRow = 0;
+		var m = 0;
+		var minefield = [];
+		var s = 0;
+
+		challenge = document.getElementById('challenge').checked;
+		
+		
+			
+		// CREATE  MINEFIELD
+		 while (size > i) {
+			lastRow = grid.rows.length;
+			var row = grid.insertRow(lastRow);
+			 for (n = 0; n < size; n++) {
+				var cell = row.insertCell(n);
+				cell.innerHTML = '<a onmousedown="checkKey(this, event)">#</a>';
+			 }
+			i++
+		 }
+		 // END MINE ADDING
+		 
+		 //SET CLOCK ACCORDING TO CHALLENGE MODE ON/OFF
+		if(challenge) {
+		time = minez*7/(size/10);
+		time = Math.ceil(time);
+		document.getElementById('clock').innerHTML = time;
+		}
+		else {
+		document.getElementById('clock').innerHTML = 0;
+		time = 0;
+		}
+		 //END CLOCK SET
+		 
+		 // ADD MINES
+		cells = grid.getElementsByTagName('a');
+		document.getElementById('mines').innerHTML = minez;
+		var mines = minez;
+		 while (s < cells.length) {
+			minefield.push(cells[s]);
+			s++;
+		 }
+
+		 while (mines != 0) {
+			m = Math.floor(Math.random()*(minefield.length)); 
+			mine = minefield[m];
+			mine.className = "mine";
+			minefield.splice(m, 1); 
+			mines--;
+		 }
+		 // STOP ADDING MINES
+		 
+		 // ENABLE CLICKING AND RESET FLAG COUNT & TIMER
+		 document.getElementById('winlose').value = "0";
+		 document.getElementById('flagcount').innerHTML = "0";
+		 document.getElementById('size').value = size;
+		document.getElementById('minez').value = minez;
+		document.getElementById('result').style.display = "none";
+		document.getElementById('win').style.display ="none";
+		document.getElementById('lose').style.display = "none";
+		 clearTimeout(t);
+		 timer_is_on = false;
+		 // END
+	}
+	
+// ERASE LAST GAME FIELD
+	
+	function newGame() {
+		
+		size = document.getElementById('size').value;
+		minez = document.getElementById('minez').value;
+		size = parseInt(size);
+		minez = parseInt(minez);
+	
+		if (size=="" || size == null ) {
+			alert("You must give size");
+			return false;
+		}
+		if (size > 40 || size < 2) {
+			alert("Size has to be set between 2 and 50");
+			return false;
+		}
+		if (minez == null || minez == "" ) {
+			alert("You must enter amount of mines");
+			return false;
+		}
+		if (minez >= size * size) {
+			alert("There cannot be more or equal amount of mines than there is fields...");
+			return false;
+		}
+		 var table = document.getElementById('grid');
+         var rowCount = table.rows.length;
+         while (rowCount > 0)
+         {
+             table.deleteRow(rowCount-1);
+             rowCount--;
+         }	 
+		 createGame(size, minez);
+	}
+	
+// TIMER
+
+	function timedCount() {
+		
+		if (challenge) {
+			time--;
+			document.getElementById('clock').innerHTML = time;
+			if (time <= 0) {
+				revealAll();
+			}
+			else {
+				t = setTimeout("timedCount()", 1000);
+			}
+	
+		}
+		else {
+			time++;
+			document.getElementById('clock').innerHTML = time;
+			t = setTimeout("timedCount()", 1000);
+		}
+		
+	}
+	
+</script>
+<style type="text/css">
+	#grid td {
+		width:25px;
+		height:25px;
+		text-align:center;
+		padding:0px;
+		margin: 0px;
+	}
+	.opened {
+		background: #f2f2f2;
+		
+		position:relative;
+		
+	}
+	#grid td a {
+		font-weight:bold;
+		width: 23px;
+		height: 23px;
+		text-align:center;
+		vertical-align:middle;
+		display:block;
+		border: 1px solid #000;
+		padding: 0px;
+		margin:0px;
+		cursor: default;
+	}
+	#flagged {
+		color: red;
+	}
+	#grid {
+		border:1px solid #000;
+	}
+	#box, #game_status {
+		background:#FFE4B5;
+		padding:5px;
+	}
+	.new  {
+		cursor: pointer;
+		cursor: hand;
+	}
+	#win, #lose {
+		position: relative;
+		top: 50%;
+		margin:auto auto;
+		
+	}
+	#result {
+		position:absolute;
+		background:rgba(255,255,255, 0.5);
+		width:100%;
+		height:100%;
+		z-index:10;
+		display:none;
+	}
+	html, body {
+		height: 100%;
+	}
+	#test-div {
+		height:100%;
+		margin: 0px;
+		position:relative;
+		right:0px;
+		width: 20px;
+		background:#f7ac01;
+	}
+</style>
+</head>
+<center>
+<body onLoad="setDefaults()">
+<table>
+	<tr>
+		<td id="box" valign="top" align="left">
+			<div id="confbox">
+			<h2>Settings:</h2>
+			<span>Give minefield size (2-40):</span><br/>
+			<input type="text" id="size" value="" />
+			<br /><br />
+			<span>Give amount of mines<br />(cannot exeed size*size): </span><br />
+			<input type="text" id="minez" value="" />
+			<br /> <br />
+			<span>Time challenge? </span>
+			<input type="checkbox" id="challenge" value="1" /><br /> <br />
+			<a onclick="newGame()" class="new" style=""><b>New Game</b></a>
+			</div>
+		</td> 
+		<td style="position:relative;">
+			<div id="result" style=""><a onclick="newGame()" style="width:100%; height:100%;display:block;"><img id="win" src="win.png" style="display:none;" ><img id="lose" src="lose.png" style="display:none;" ></a></div>
+			<table id="grid" cellpadding="0" cellspacing="0" style="background:#ccc; " >
+			</table>
+		</td>
+		<td id="game_status"  valign="top" align="left">
+			<div ><br /><br />
+			Flags/mines: <span id="flagcount" value="0" style="width:22px;"></span>/<span id="mines">20</span><input type="hidden" value="0" id="winlose" /><br />Clock:<span id="clock">0</span>
+			</div>
+		</td>
+	</tr>
+</table>
+</center>
+</body>
+</html>
